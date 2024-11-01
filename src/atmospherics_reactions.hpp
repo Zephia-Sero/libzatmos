@@ -2,19 +2,19 @@
 #define ATMOSPHERICS_REACTIONS_HPP
 
 #include <string>
-#include <utility>
 #include <vector>
 #include "atmosphere.hpp"
-#include "atmospherics_element.hpp"
+
+
 struct AtmosphericsReaction {
-	std::vector<std::pair<std::string, double>> reactants;
-	std::vector<std::pair<std::string, double>> products;
-	bool ignitable = true;
+	AtmosphericsMixture reactants;
+	AtmosphericsMixture products;
 	double autoignitionPoint;
 	// J/mol
 	double energyReleased;
 	// mol/s
 	double reactionSpeed = 1;
+	bool ignitable = true;
 	// K, J/mol
 	AtmosphericsReaction(double autoignitionPoint, double energyReleased, bool ignitable = true);
 	void add_reactant(std::string const &chemicalId, double portion);

@@ -3,17 +3,18 @@
 
 #include "registry.hpp"
 #include <string>
+#include <vector>
 
 struct AtmosphericsElement {
 private:
+	std::string name;
+	std::string shortName;
 	// J / (K · kg)
 	double heatCapacity;
 	// kg / mol
 	double molarMass;
 	// W / (m · K)
 	double thermalConductivity;
-	std::string shortName;
-	std::string name;
 public:
 	AtmosphericsElement(std::string name, std::string shortName, double heatCapacity, double molarMass, double thermalConductivity);
 	AtmosphericsElement();

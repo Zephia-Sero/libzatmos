@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "atmospherics_mixture.hpp"
 enum AtmosphereType {
 	WORLD,
 	ROOM,
@@ -18,7 +19,6 @@ public:
 	AtmosphereType type;
 	// J / K·mol
 	double gasConstant = 8.31446261815324;
-	double tempKelvin = 0;
 	double minTemperature = 0.001; // K
 	double mixRate = 5; // L/kPa·s
 	double maxPressure = 1000;
@@ -26,9 +26,10 @@ public:
 	double tempMixRate = 100; // no unit, multiplied against conductivity
 	// L
 	double volume = 0;
+	double tempKelvin = 0;
 	double heatEnergy = 0;
 	// K
-	std::vector<std::pair<std::string, double>> contents;
+	AtmosphericsMixture contents;
 
 	Atmosphere(AtmosphereType type, double volume);
 	bool has(std::string const &chemicalId, double atLeastMoles=0) const;
@@ -45,8 +46,10 @@ public:
 	void remove_without_heat(std::string const &chemicalId, double moles);
 	void remove_all(std::string const &chemicalId);
 
-	void mix_with(Atmosphere &other, double dt, bool temperatureMix = true);
+	void mix_with(Atmosphere &other, double dt, bool allowBackflow, bool temperatureMix = true);
 	void mix_temperatures(Atmosphere &other, double dt);
+	// conductivity is in J / (s · K)
+	void mix_temperatures_at(Atmosphere &other, double conductivity, double dt);
 	void move_gas_volume(Atmosphere &other, double volume);
 	void move_gas_moles(Atmosphere &other, double moles);
 
