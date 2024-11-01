@@ -1,6 +1,7 @@
 #ifndef ATMOSPHERE_HPP
 #define ATMOSPHERE_HPP
 
+#include <string>
 #include <utility>
 #include <vector>
 enum AtmosphereType {
@@ -9,10 +10,11 @@ enum AtmosphereType {
 	PIPE,
 };
 
-#include "chemical_types.hpp"
-
 struct Atmosphere {
+private:
+	static int currentId;
 public:
+	int id;
 	AtmosphereType type;
 	// J / K·mol
 	double gasConstant = 8.31446261815324;
@@ -26,22 +28,22 @@ public:
 	double volume = 0;
 	double heatEnergy = 0;
 	// K
-	std::vector<std::pair<ChemicalType, double>> contents;
+	std::vector<std::pair<std::string, double>> contents;
 
 	Atmosphere(AtmosphereType type, double volume);
-	bool has(ChemicalType chemical, double atLeastMoles=0) const;
+	bool has(std::string const &chemicalId, double atLeastMoles=0) const;
 	// used for in-atmosphere reactions, like autoignition and such
 	virtual void tick(double dt);
 	// attempt to burn the atmosphere
-	void ignite();
+	void ignite(double dt=1);
 	void add_volume(double amount);
-	void add_moles_temp(ChemicalType chemical, double moles, double tempKelvin);
-	void add_mass_temp(ChemicalType chemical, double mass, double tempKelvin);
-	void add_moles_heat(ChemicalType chemical, double moles, double heatEnergy);
-	void add_mass_heat(ChemicalType chemical, double mass, double heatEnergy);
-	void remove(ChemicalType chemical, double moles);
-	void remove_without_heat(ChemicalType chemical, double moles);
-	void remove_all(ChemicalType chemical);
+	void add_moles_temp(std::string const &chemicalId, double moles, double tempKelvin);
+	void add_mass_temp(std::string const &chemicalId, double mass, double tempKelvin);
+	void add_moles_heat(std::string const &chemicalId, double moles, double heatEnergy);
+	void add_mass_heat(std::string const &chemicalId, double mass, double heatEnergy);
+	void remove(std::string const &chemicalId, double moles);
+	void remove_without_heat(std::string const &chemicalId, double moles);
+	void remove_all(std::string const &chemicalId);
 
 	void mix_with(Atmosphere &other, double dt, bool temperatureMix = true);
 	void mix_temperatures(Atmosphere &other, double dt);
@@ -56,19 +58,19 @@ public:
 	// mol
 	double get_moles() const;
 	// mol
-	double get_moles(ChemicalType chemical) const;
+	double get_moles(std::string const &chemicalId) const;
 	// kg
 	double get_mass() const;
 	// kg
-	double get_mass(ChemicalType chemical) const;
+	double get_mass(std::string const &chemicalId) const;
 	// %
-	double get_percent_pressure(ChemicalType chemical) const;
+	double get_percent_pressure(std::string const &chemicalId) const;
 	// %
-	double get_percent_mass(ChemicalType chemical) const;
+	double get_percent_mass(std::string const &chemicalId) const;
 	// kPa
 	double get_pressure() const;
 	// kPa
-	double get_pressure(ChemicalType chemical) const;
+	double get_pressure(std::string const &chemicalId) const;
 	// J / K·kg
 	double get_specific_heat_mass() const;
 	// J / K·mol

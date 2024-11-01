@@ -2,10 +2,8 @@
 #define REGISTRY_HPP
 
 
-#include <cstddef>
 #include <stdexcept>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
 
 template <typename T>
@@ -13,13 +11,17 @@ struct ImmutableRegistry {
 private:
 	std::unordered_map<std::string, T> map;
 public:
-	inline ImmutableRegistry(unsigned int initialAllocation=1)
-		: map(initialAllocation)
+	inline ImmutableRegistry()
 	{}
+
+	inline bool has_key(std::string const &key)
+	{
+		return map.count(key) > 0;
+	}
 	// Returns true if key is found.
 	inline bool try_cget(std::string const &key, T const *&out)
 	{
-		if (map.count(key) > 0) {
+		if (has_key(key)) {
 			out = &map[key];
 			return true;
 		}
@@ -28,7 +30,7 @@ public:
 	// Throws if key is not in registry.
 	inline T const *cget(std::string const &key)
 	{
-		if (map.count(key) > 0)
+		if (has_key(key))
 			return &map[key];
 		throw std::invalid_argument("Key '" + key + "' not found in registry");
 		return nullptr; // shouldn't be reached but shh
@@ -36,7 +38,7 @@ public:
 	// Adds key:value to registry
 	inline void add(std::string const &key, T const &value)
 	{
-		if (map.count(key) > 0) {
+		if (has_key(key)) {
 			throw std::invalid_argument("Key '" + key + "' has already been registered");
 			return;
 		}
@@ -56,7 +58,7 @@ private:
 public:
 	inline bool try_get(std::string const &key, T *&out)
 	{
-		if (map.count(key) > 0) {
+		if (ImmutableRegistry<T>::has_key(key)) {
 			out = &map[key];
 			return true;
 		}
@@ -64,14 +66,14 @@ public:
 	}
 	inline T *get(std::string const &key)
 	{
-		if (map.count(key) > 0)
+		if (ImmutableRegistry<T>::has_key(key))
 			return &map[key];
 		throw std::invalid_argument("Key '" + key + "' not found in registry");
 		return nullptr;
 	}
 	inline void set(std::string const &key, T const &value)
 	{
-		if (map.count(key) > 0) {
+		if (ImmutableRegistry<T>::has_key(key)) {
 			map[key] = value;
 		} else {
 			throw std::invalid_argument("Key '" + key + "' not found in registry");

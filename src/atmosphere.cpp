@@ -1,31 +1,39 @@
 #include "atmosphere.hpp"
-#include "chemical_types.hpp"
+#include "atmospherics_element.hpp"
 #include "atmospherics_reactions.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
+#include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
+
+int Atmosphere::currentId = 0;
 
 Atmosphere::Atmosphere(AtmosphereType type, double volume)
 	: type(type), volume(volume), tempKelvin(0), contents()
 {
+	id = Atmosphere::currentId++;
 	recalculate_dirty();
 }
-void Atmosphere::add_moles_temp(ChemicalType chemical, double moles, double tempKelvin)
+void Atmosphere::add_moles_temp(std::string const &chemicalId, double moles, double tempKelvin)
 {
+	if (!atmosphericsElements.has_key(chemicalId))
+		throw std::invalid_argument("Atmospherics Element '" + chemicalId + "' not found when adding to atmosphere " + std::to_string(id));
 	// mix gas in
-	for (std::pair<ChemicalType, double> &entry : contents) {
-		if (entry.first == chemical) {
+	for (std::pair<std::string, double> &entry : contents) {
+		if (entry.first == chemicalId) {
 			entry.second += moles;
 			goto no_add;
 		}
 	}
 	// couldn't find, add to list
-	contents.push_back(std::pair(chemical, moles));
+	contents.push_back(std::pair(chemicalId, moles));
 no_add:;
+	auto element = atmosphericsElements[chemicalId];
 	// mix temperatures
-	add_heat(tempKelvin * Chemical::get_heat_capacity_moles(chemical, moles));
+	add_heat(tempKelvin * element->get_heat_capacity_moles() * moles);
 }
 void Atmosphere::add_volume(double amount)
 {
@@ -35,74 +43,85 @@ void Atmosphere::add_volume(double amount)
 		contents.clear();
 	recalculate_dirty();
 }
-void Atmosphere::add_moles_heat(ChemicalType chemical, double moles, double heatEnergy)
+void Atmosphere::add_moles_heat(std::string const &chemicalId, double moles, double heatEnergy)
 {
+	if (!atmosphericsElements.has_key(chemicalId))
+		throw std::invalid_argument("Atmospherics Element '" + chemicalId + "' not found when adding to atmosphere " + std::to_string(id));
 	// mix gas in
-	for (std::pair<ChemicalType, double> &entry : contents) {
-		if (entry.first == chemical) {
+	for (std::pair<std::string, double> &entry : contents) {
+		if (entry.first == chemicalId) {
 			entry.second += moles;
 			goto no_add;
 		}
 	}
 	// couldn't find, add to list
-	contents.push_back(std::pair(chemical, moles));
+	contents.push_back(std::pair(chemicalId, moles));
 no_add:;
 	// mix temperatures
 	add_heat(heatEnergy);
 }
-void Atmosphere::add_mass_temp(ChemicalType chemical, double mass, double tempKelvin)
+void Atmosphere::add_mass_temp(std::string const &chemicalId, double mass, double tempKelvin)
 {
+	if (!atmosphericsElements.has_key(chemicalId))
+		throw std::invalid_argument("Atmospherics Element '" + chemicalId + "' not found when adding to atmosphere " + std::to_string(id));
+	auto element = atmosphericsElements[chemicalId];
 	// a / (a/b) = a * b/a = b
-	double moles = mass / Chemical::get_molar_mass(chemical);
+	double moles = mass / element->get_molar_mass();
 	// mix gas in
-	for (std::pair<ChemicalType, double> &entry : contents) {
-		if (entry.first == chemical) {
+	for (std::pair<std::string, double> &entry : contents) {
+		if (entry.first == chemicalId) {
 			entry.second += moles;
 			goto no_add;
 		}
 	}
 	// couldn't find, add to list
-	contents.push_back(std::pair(chemical, moles));
+	contents.push_back(std::pair(chemicalId, moles));
 no_add:;
 	// mix temperatures
-	add_heat(tempKelvin * Chemical::get_heat_capacity_moles(chemical, moles));
+	add_heat(tempKelvin * element->get_heat_capacity_mass() * mass);
 }
-void Atmosphere::add_mass_heat(ChemicalType chemical, double mass, double heatEnergy)
+void Atmosphere::add_mass_heat(std::string const &chemicalId, double mass, double heatEnergy)
 {
+	if (!atmosphericsElements.has_key(chemicalId))
+		throw std::invalid_argument("Atmospherics Element '" + chemicalId + "' not found when adding to atmosphere " + std::to_string(id));
+	auto element = atmosphericsElements[chemicalId];
 	// a / (a/b) = a * b/a = b
-	double moles = mass / Chemical::get_molar_mass(chemical);
+	double moles = mass / element->get_molar_mass();
 	// mix gas in
-	for (std::pair<ChemicalType, double> &entry : contents) {
-		if (entry.first == chemical) {
+	for (std::pair<std::string, double> &entry : contents) {
+		if (entry.first == chemicalId) {
 			entry.second += moles;
 			goto no_add;
 		}
 	}
 	// couldn't find, add to list
-	contents.push_back(std::pair(chemical, moles));
+	contents.push_back(std::pair(chemicalId, moles));
 no_add:;
 	// mix temperatures
 	add_heat(heatEnergy);
 }
-void Atmosphere::remove(ChemicalType chemical, double moles)
+void Atmosphere::remove(std::string const &chemicalId, double moles)
 {
+	if (!atmosphericsElements.has_key(chemicalId))
+		throw std::invalid_argument("Atmospherics Element '" + chemicalId + "' not found when removing from atmosphere " + std::to_string(id));
+	auto element = atmosphericsElements[chemicalId];
 	for (auto v = contents.begin(); v < contents.end(); ++v) {
-		if (v->first == chemical) {
+		if (v->first == chemicalId) {
 			if (moles >= v->second) {
 				contents.erase(v);
-				add_heat(-(v->second * Chemical::get_specific_heat_moles(v->first) * get_temperature()));
+				add_heat(-(v->second * element->get_heat_capacity_moles() * get_temperature()));
 			} else {
 				v->second -= moles;
-				add_heat(-(moles * Chemical::get_specific_heat_moles(v->first) * get_temperature()));
+				add_heat(-(moles * element->get_heat_capacity_moles() * get_temperature()));
 			}
 			return;
 		}
 	}
 }
-void Atmosphere::remove_without_heat(ChemicalType chemical, double moles)
+void Atmosphere::remove_without_heat(std::string const &chemicalId, double moles)
 {
 	for (auto v = contents.begin(); v < contents.end(); ++v) {
-		if (v->first == chemical) {
+		if (v->first == chemicalId) {
 			if (moles >= v->second) {
 				contents.erase(v);
 			} else {
@@ -112,13 +131,16 @@ void Atmosphere::remove_without_heat(ChemicalType chemical, double moles)
 		}
 	}
 }
-void Atmosphere::remove_all(ChemicalType chemical)
+void Atmosphere::remove_all(std::string const &chemicalId)
 {
+	if (!atmosphericsElements.has_key(chemicalId))
+		throw std::invalid_argument("Atmospherics Element '" + chemicalId + "' not found when removing from atmosphere " + std::to_string(id));
+	auto element = atmosphericsElements[chemicalId];
 	for (auto v = contents.cbegin(); v < contents.cend(); ++v) {
-		if (v->first == chemical) {
+		if (v->first == chemicalId) {
 			// mol * J/K·mol * K = J
 			contents.erase(v);
-			add_heat(-(v->second * Chemical::get_specific_heat_moles(v->first) * get_temperature()));
+			add_heat(-(v->second * element->get_heat_capacity_moles() * get_temperature()));
 			return;
 		}
 	}
@@ -152,20 +174,20 @@ void Atmosphere::add_heat(double heatEnergy)
 double Atmosphere::get_moles() const
 {
 	double sum = 0;
-	for (std::pair<ChemicalType, double> const &entry : contents) {
+	for (std::pair<std::string, double> const &entry : contents) {
 		sum += entry.second;
 	}
 	return sum;
 }
-double Atmosphere::get_moles(ChemicalType chemical) const
+double Atmosphere::get_moles(std::string const &chemicalId) const
 {
-	for (std::pair<ChemicalType, double> const &entry : contents) {
-		if (entry.first == chemical)
+	for (std::pair<std::string, double> const &entry : contents) {
+		if (entry.first == chemicalId)
 			return entry.second;
 	}
 	return 0;
 }
-double Atmosphere::get_percent_pressure(ChemicalType chemical) const
+double Atmosphere::get_percent_pressure(std::string const &chemicalId) const
 {
 	// PV = nRT
 	// V = nRT/T
@@ -175,27 +197,30 @@ double Atmosphere::get_percent_pressure(ChemicalType chemical) const
 	// a / (a + b + c)
 	// molar percent is the same as pressure (volume) percent
 	double moles = get_moles();
-	return get_moles(chemical) / moles;
+	return get_moles(chemicalId) / moles;
 }
 double Atmosphere::get_mass() const
 {
 	double sum = 0;
-	for (std::pair<ChemicalType, double> const &entry : contents) {
-		sum += Chemical::get_molar_mass(entry.first) * entry.second;
-	}
+	for (std::pair<std::string, double> const &entry : contents)
+		sum += get_mass(entry.first);
 	return sum;
 }
-double Atmosphere::get_mass(ChemicalType chemical) const
+double Atmosphere::get_mass(std::string const &chemicalId) const
 {
-	for (std::pair<ChemicalType, double> const &entry : contents) {
-		if (entry.first == chemical)
-			return Chemical::get_molar_mass(chemical) * entry.second;
+	for (std::pair<std::string, double> const &entry : contents) {
+		if (entry.first == chemicalId) {
+			if (!atmosphericsElements.has_key(chemicalId))
+				throw std::invalid_argument("Atmospherics Element '" + chemicalId + "' not found when calculating mass from atmosphere " + std::to_string(id));
+			auto element = atmosphericsElements[chemicalId];
+			return element->get_molar_mass() * entry.second;
+		}
 	}
 	return 0;
 }
-double Atmosphere::get_percent_mass(ChemicalType chemical) const
+double Atmosphere::get_percent_mass(std::string const &chemicalId) const
 {
-	return get_mass(chemical) / get_mass();
+	return get_mass(chemicalId) / get_mass();
 }
 double Atmosphere::get_pressure() const
 {
@@ -204,9 +229,9 @@ double Atmosphere::get_pressure() const
 	double energy = get_moles() * gasConstant * tempKelvin; // J
 	return energy / volume;
 }
-double Atmosphere::get_pressure(ChemicalType chemical) const
+double Atmosphere::get_pressure(std::string const &chemicalId) const
 {
-	double energy = get_moles(chemical) * gasConstant * tempKelvin;
+	double energy = get_moles(chemicalId) * gasConstant * tempKelvin;
 	return energy / volume;
 }
 // J / K·kg
@@ -214,10 +239,13 @@ double Atmosphere::get_specific_heat_mass() const
 {
 	double sum = 0;
 	double totalMass = get_mass();
-	for (std::pair<ChemicalType, double> const &entry : contents) {
+	for (std::pair<std::string, double> const &entry : contents) {
+		if (!atmosphericsElements.has_key(entry.first))
+			throw std::invalid_argument("Atmospherics Element '" + entry.first + "' not found when calculating heat capacity from atmosphere " + std::to_string(id));
+		auto element = atmosphericsElements[entry.first];
 		double mass = get_mass(entry.first);
 		double massRatio = mass / totalMass;
-		sum += massRatio * Chemical::get_specific_heat_mass(entry.first);
+		sum += massRatio * element->get_heat_capacity_mass();
 	}
 	return sum;
 }
@@ -226,10 +254,13 @@ double Atmosphere::get_specific_heat_moles() const
 {
 	double sum = 0;
 	double totalMass = get_mass();
-	for (std::pair<ChemicalType, double> const &entry : contents) {
+	for (std::pair<std::string, double> const &entry : contents) {
+		if (!atmosphericsElements.has_key(entry.first))
+			throw std::invalid_argument("Atmospherics Element '" + entry.first + "' not found when calculating heat capacity from atmosphere " + std::to_string(id));
+		auto element = atmosphericsElements[entry.first];
 		double mass = get_mass(entry.first);
 		double massRatio = mass / totalMass;
-		sum += massRatio * Chemical::get_specific_heat_moles(entry.first);
+		sum += massRatio * element->get_heat_capacity_moles();
 	}
 	return sum;
 }
@@ -237,10 +268,13 @@ double Atmosphere::get_thermal_conductivity() const
 {
 	double sum = 0;
 	double totalMass = get_mass();
-	for (std::pair<ChemicalType, double> const &entry : contents) {
+	for (std::pair<std::string, double> const &entry : contents) {
+		if (!atmosphericsElements.has_key(entry.first))
+			throw std::invalid_argument("Atmospherics Element '" + entry.first + "' not found when calculating thermal conductivity from atmosphere " + std::to_string(id));
+		auto element = atmosphericsElements[entry.first];
 		double mass = get_mass(entry.first);
 		double massRatio = mass / totalMass;
-		sum += massRatio * Chemical::get_thermal_conductivity(entry.first);
+		sum += massRatio * element->get_thermal_conductivity();
 	}
 	return sum;
 }
@@ -285,8 +319,8 @@ void Atmosphere::move_gas_moles(Atmosphere &other, double moles)
 	// V = nRT/P
 	// V/n = RT/P
 	// n/V = P/RT
-	std::vector<std::pair<ChemicalType, double>> moved;
-	for (std::pair<ChemicalType, double> &entry : contents) {
+	std::vector<std::pair<std::string, double>> moved;
+	for (std::pair<std::string, double> &entry : contents) {
 		double molarPercent = get_percent_mass(entry.first);
 		double entryPortion = molarPercent * moles;
 		moved.push_back(std::pair(entry.first, entryPortion));
@@ -294,7 +328,7 @@ void Atmosphere::move_gas_moles(Atmosphere &other, double moles)
 
 	double temp = get_temperature();
 
-	for (std::pair<ChemicalType, double> &entry : moved) {
+	for (std::pair<std::string, double> &entry : moved) {
 		other.add_moles_temp(entry.first, entry.second, temp);
 		remove(entry.first, entry.second);
 	}
@@ -305,8 +339,8 @@ void Atmosphere::move_gas_volume(Atmosphere &other, double volume)
 	// V = nRT/P
 	// V/n = RT/P
 	// n/V = P/RT
-	std::vector<std::pair<ChemicalType, double>> moved;
-	for (std::pair<ChemicalType, double> &entry : contents) {
+	std::vector<std::pair<std::string, double>> moved;
+	for (std::pair<std::string, double> &entry : contents) {
 		double molesPerVolume = entry.second / this->volume;
 		double moles = molesPerVolume * volume;
 		moved.push_back(std::pair(entry.first, moles));
@@ -314,15 +348,15 @@ void Atmosphere::move_gas_volume(Atmosphere &other, double volume)
 
 	double temp = get_temperature();
 
-	for (std::pair<ChemicalType, double> &entry : moved) {
+	for (std::pair<std::string, double> &entry : moved) {
 		other.add_moles_temp(entry.first, entry.second, temp);
 		remove(entry.first, entry.second);
 	}
 }
-bool Atmosphere::has(ChemicalType chemical, double atLeastMoles) const
+bool Atmosphere::has(std::string const &chemicalId, double atLeastMoles) const
 {
 	for (auto const &entry : contents)
-		if (entry.first == chemical)
+		if (entry.first == chemicalId)
 			return entry.second > atLeastMoles;
 	return false;
 }
@@ -338,11 +372,11 @@ void Atmosphere::tick(double dt)
 		}
 		if (get_temperature() < reaction.autoignitionPoint)
 next:			continue;
-		reaction.do_once(*this);
+		reaction.do_once(*this, dt);
 	}
 }
 // forcefully burn the atmosphere if possible
-void Atmosphere::ignite()
+void Atmosphere::ignite(double dt)
 {
 	for (auto reaction : atmosphericsReactions) {
 		if (!reaction.ignitable) continue;
@@ -350,7 +384,7 @@ void Atmosphere::ignite()
 			if (!has(reactant.first))
 				goto next;
 		}
-		reaction.do_once(*this);
+		reaction.do_once(*this, dt);
 next:		continue;
 	}
 }

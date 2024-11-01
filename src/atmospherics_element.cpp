@@ -31,3 +31,15 @@ void register_atmospherics_builtins()
 			18.0152833 / 1000.0,
 			0.68));
 }
+AtmosphericsElement::AtmosphericsElement(std::string name, std::string shortName, double heatCapacity, double molarMass, double thermalConductivity)
+	: name(name), shortName(shortName),
+	  heatCapacity(heatCapacity), molarMass(molarMass), thermalConductivity(thermalConductivity)
+{}
+AtmosphericsElement::AtmosphericsElement()
+{
+	name = "UNDEFINED";
+	shortName = "UNDEFINED";
+	heatCapacity = 0;
+	molarMass = 0;
+	thermalConductivity = 0;
+}

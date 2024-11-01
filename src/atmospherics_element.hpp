@@ -15,11 +15,10 @@ private:
 	std::string shortName;
 	std::string name;
 public:
-	inline AtmosphericsElement(std::string name, std::string shortName, double heatCapacity, double molarMass, double thermalConductivity)
-		: name(name), shortName(shortName),
-		  heatCapacity(heatCapacity), molarMass(molarMass), thermalConductivity(thermalConductivity)
-	{}
+	AtmosphericsElement(std::string name, std::string shortName, double heatCapacity, double molarMass, double thermalConductivity);
+	AtmosphericsElement();
 	inline std::string get_name() const { return name; }
+	inline std::string get_short_name() const { return shortName; }
 	// J / (K · mol)
 	inline double get_heat_capacity_moles() const { return heatCapacity * molarMass; };
 	// J / (K · kg)

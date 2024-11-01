@@ -1,47 +1,37 @@
 #include "atmospherics_reactions.hpp"
 #include "atmosphere.hpp"
-#include "chemical_types.hpp"
+#include "atmospherics_element.hpp"
 #include <utility>
 
 
 AtmosphericsReaction::AtmosphericsReaction(double autoignitionPoint, double energyReleased, bool ignitable)
 	: autoignitionPoint(autoignitionPoint), energyReleased(energyReleased), ignitable(ignitable)
 {}
-void AtmosphericsReaction::guess_energy_released()
+void AtmosphericsReaction::add_reactant(std::string const &chemicalId, double portion)
 {
-	double reactantEnergy = 0;
-	static double const c = 299792458;
-	static double const c2 = c*c;
-	for (auto const &reactant : reactants)
-		reactantEnergy += Chemical::get_molar_mass(reactant.first) * reactant.second * c2;
-	double productEnergy = 0;
-	for (auto const &product : products)
-		productEnergy += Chemical::get_molar_mass(product.first) * product.second * c2;
-	energyReleased = reactantEnergy - productEnergy;
+	reactants.push_back(std::pair(chemicalId, portion));
 }
-void AtmosphericsReaction::add_reactant(ChemicalType chemical, double portion)
+void AtmosphericsReaction::add_product(std::string const &chemicalId, double portion)
 {
-	reactants.push_back(std::pair(chemical, portion));
+	products.push_back(std::pair(chemicalId, portion));
 }
-void AtmosphericsReaction::add_product(ChemicalType chemical, double portion)
-{
-	products.push_back(std::pair(chemical, portion));
-}
-void AtmosphericsReaction::do_once(Atmosphere &atmosphere) const
+void AtmosphericsReaction::do_once(Atmosphere &atmosphere, double dt) const
 {
 	double amountPossible = 1.0;
+	double speedScale = reactionSpeed;
+	speedScale *= atmosphere.tempKelvin / autoignitionPoint; // faster the hotter the reaction is, maybe change later
 	for (auto const &reactant : reactants) {
-		double amountPossibleSingle = atmosphere.contents[reactant.first].second / (reactant.second * reactionSpeed);
+		double amountPossibleSingle = atmosphere.get_moles(reactant.first) / (reactant.second * speedScale);
 		amountPossible = std::min(amountPossible, amountPossibleSingle);
 	}
 	for (auto const &reactant : reactants) {
-		double molesRemoved = reactant.second * reactionSpeed;
+		double molesRemoved = reactant.second * speedScale * dt;
 		atmosphere.remove_without_heat(reactant.first, molesRemoved);
 	}
 	for (auto const &product : products) {
-		double molesAdded = product.second * reactionSpeed;
+		double molesAdded = product.second * speedScale * dt;
 		atmosphere.add_moles_heat(product.first, molesAdded, 0);
 	}
-	atmosphere.add_heat(energyReleased * reactionSpeed);
+	atmosphere.add_heat(energyReleased * speedScale * dt);
 }
 std::vector<AtmosphericsReaction> atmosphericsReactions;
