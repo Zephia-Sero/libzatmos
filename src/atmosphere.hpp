@@ -5,18 +5,12 @@
 #include <utility>
 #include <vector>
 #include "atmospherics_mixture.hpp"
-enum AtmosphereType {
-	WORLD,
-	ROOM,
-	PIPE,
-};
 
 struct Atmosphere {
 private:
 	static int currentId;
 public:
 	int id;
-	AtmosphereType type;
 	// J / K·mol
 	double gasConstant = 8.31446261815324;
 	double minTemperature = 0.001; // K
@@ -31,7 +25,7 @@ public:
 	// K
 	AtmosphericsMixture contents;
 
-	Atmosphere(AtmosphereType type, double volume);
+	Atmosphere(double volume);
 	bool has(std::string const &chemicalId, double atLeastMoles=0) const;
 	// used for in-atmosphere reactions, like autoignition and such
 	virtual void tick(double dt);
@@ -40,11 +34,11 @@ public:
 	void add_volume(double amount);
 	void add_moles_temp(std::string const &chemicalId, double moles, double tempKelvin);
 	void add_mass_temp(std::string const &chemicalId, double mass, double tempKelvin);
-	void add_moles_heat(std::string const &chemicalId, double moles, double heatEnergy);
+	virtual void add_moles_heat(std::string const &chemicalId, double moles, double heatEnergy);
 	void add_mass_heat(std::string const &chemicalId, double mass, double heatEnergy);
-	void remove(std::string const &chemicalId, double moles);
-	void remove_without_heat(std::string const &chemicalId, double moles);
-	void remove_all(std::string const &chemicalId);
+	virtual void remove(std::string const &chemicalId, double moles);
+	virtual void remove_without_heat(std::string const &chemicalId, double moles);
+	virtual void remove_all(std::string const &chemicalId);
 
 	void mix_with(Atmosphere &other, double dt, bool allowBackflow, bool temperatureMix = true);
 	void mix_temperatures(Atmosphere &other, double dt);

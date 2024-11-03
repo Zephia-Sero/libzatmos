@@ -25,7 +25,7 @@ void draw_atmosphere(Atmosphere const &atmosphere, int x, int y)
 		auto element = atmosphericsElements[entry.chemicalId];
 		double chemPerc = atmosphere.get_percent_pressure(entry.chemicalId) * 100;
 		double moles = atmosphere.get_moles(entry.chemicalId);
-		DrawText(TextFormat("%s: %lf%%\n\n%lfmol", element->get_short_name().c_str(), chemPerc, moles), x, ty, 32, BLACK);
+		DrawText(TextFormat("%s: %lf%%\n%lfmol", element->get_short_name().c_str(), chemPerc, moles), x, ty, 32, BLACK);
 		ty += 64;
 	}
 }
@@ -35,28 +35,28 @@ int main()
 {
 	register_atmospherics_builtins();
 
-	atmosphericsElements.add("custom-gas",
-		AtmosphericsElement(
-			"Custom Gas", "CG",
-			19.44831, // heat capacity (J/kgK)
-			88.14490 / 1000, // molar mass (kg/mol)
-			0 // thermal conductivity (W / (m · K))
-		));
-
+	/* atmosphericsElements.add("custom-gas", */
+	/* 	AtmosphericsElement( */
+	/* 		"Custom Gas", "CG", */
+	/* 		19.44831, // heat capacity (J/kgK) */
+	/* 		88.14490 / 1000, // molar mass (kg/mol) */
+	/* 		0 // thermal conductivity (W / (m · K)) */
+	/* 	)); */
+	/*  */
 	AtmosphericsReaction hydrogenCombustion(CELSIUS(550), 241920);
 	hydrogenCombustion.add_reactant("hydrogen", 2); // 2H2 + O2 = 2H2O
 	hydrogenCombustion.add_reactant("oxygen", 1);
 	hydrogenCombustion.add_product("water", 2);
-	hydrogenCombustion.add_product("custom-gas", 0.01); // woah!
+	// hydrogenCombustion.add_product("custom-gas", 0.01); // woah!
 	hydrogenCombustion.reactionSpeed = 1.0;
 	atmosphericsReactions.push_back(hydrogenCombustion);
 
-	Atmosphere hydrogenTank(ROOM, 1000);
+	Atmosphere hydrogenTank(1000);
 	hydrogenTank.add_moles_temp("hydrogen", 80, CELSIUS(20));
-	Atmosphere oxygenTank(ROOM, 2000);
+	Atmosphere oxygenTank(2000);
 	oxygenTank.add_moles_temp("oxygen", 80, CELSIUS(20));
-	Atmosphere reactionChamber(ROOM, 1000);
-	Atmosphere waterTank(ROOM, 1000);
+	Atmosphere reactionChamber(1000);
+	Atmosphere waterTank(1000);
 
 	InitWindow(640, 640, "zatmos");
 	//SetTargetFPS(60);

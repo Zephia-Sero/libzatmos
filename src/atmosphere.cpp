@@ -10,8 +10,8 @@
 
 int Atmosphere::currentId = 0;
 
-Atmosphere::Atmosphere(AtmosphereType type, double volume)
-	: type(type), volume(volume), tempKelvin(0), contents()
+Atmosphere::Atmosphere(double volume)
+	: volume(volume), tempKelvin(0), contents()
 {
 	id = Atmosphere::currentId++;
 	recalculate_dirty();
@@ -20,19 +20,8 @@ void Atmosphere::add_moles_temp(std::string const &chemicalId, double moles, dou
 {
 	if (!atmosphericsElements.has_key(chemicalId))
 		throw std::invalid_argument("Atmospherics Element '" + chemicalId + "' not found when adding to atmosphere " + std::to_string(id));
-	// mix gas in
-	for (auto &entry : contents) {
-		if (entry.chemicalId == chemicalId) {
-			entry.moles += moles;
-			goto no_add;
-		}
-	}
-	// couldn't find, add to list
-	contents.push_back(AtmosphericsQuantity(chemicalId, moles));
-no_add:;
 	auto element = atmosphericsElements[chemicalId];
-	// mix temperatures
-	add_heat(tempKelvin * element->get_heat_capacity_moles() * moles);
+	add_moles_heat(chemicalId, moles, tempKelvin * moles * element->get_heat_capacity_moles());
 }
 void Atmosphere::add_volume(double amount)
 {
@@ -64,20 +53,7 @@ void Atmosphere::add_mass_temp(std::string const &chemicalId, double mass, doubl
 	if (!atmosphericsElements.has_key(chemicalId))
 		throw std::invalid_argument("Atmospherics Element '" + chemicalId + "' not found when adding to atmosphere " + std::to_string(id));
 	auto element = atmosphericsElements[chemicalId];
-	// a / (a/b) = a * b/a = b
-	double moles = mass / element->get_molar_mass();
-	// mix gas in
-	for (auto &entry : contents) {
-		if (entry.chemicalId == chemicalId) {
-			entry.moles += moles;
-			goto no_add;
-		}
-	}
-	// couldn't find, add to list
-	contents.push_back(AtmosphericsQuantity(chemicalId, moles));
-no_add:;
-	// mix temperatures
-	add_heat(tempKelvin * element->get_heat_capacity_mass() * mass);
+	add_mass_heat(chemicalId, mass, element->get_heat_capacity_mass() * mass * tempKelvin);
 }
 void Atmosphere::add_mass_heat(std::string const &chemicalId, double mass, double heatEnergy)
 {
@@ -86,18 +62,7 @@ void Atmosphere::add_mass_heat(std::string const &chemicalId, double mass, doubl
 	auto element = atmosphericsElements[chemicalId];
 	// a / (a/b) = a * b/a = b
 	double moles = mass / element->get_molar_mass();
-	// mix gas in
-	for (auto &entry : contents) {
-		if (entry.chemicalId == chemicalId) {
-			entry.moles += moles;
-			goto no_add;
-		}
-	}
-	// couldn't find, add to list
-	contents.push_back(AtmosphericsQuantity(chemicalId, moles));
-no_add:;
-	// mix temperatures
-	add_heat(heatEnergy);
+	add_moles_heat(chemicalId, moles, heatEnergy);
 }
 void Atmosphere::remove(std::string const &chemicalId, double moles)
 {

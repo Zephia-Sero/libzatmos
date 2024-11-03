@@ -2,7 +2,7 @@
 #include "atmosphere.hpp"
 
 ElasticAtmosphere::ElasticAtmosphere(double initialVolume)
-	: Atmosphere(ROOM, initialVolume)
+	: Atmosphere(initialVolume)
 {}
 void ElasticAtmosphere::tick(double dt)
 {
