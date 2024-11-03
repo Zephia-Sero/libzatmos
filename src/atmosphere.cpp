@@ -377,10 +377,12 @@ Atmosphere Atmosphere::split(double splitVolume)
 	add_volume(-splitVolume);
 	return other;
 }
-void Atmosphere::merge(Atmosphere other)
+void Atmosphere::merge(Atmosphere &other)
 {
 	for (auto &entry : other.contents)
 		add_moles_temp(entry.chemicalId, entry.moles, other.tempKelvin);
+	add_volume(other.volume);
 	other.empty();
+	other.volume = 0;
 }
 }
