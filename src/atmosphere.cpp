@@ -191,6 +191,8 @@ double Atmosphere::get_pressure() const
 {
 	// PV = nRT
 	// P = nRT / V
+	if (volume == 0)
+		return 0;
 	double energy = get_moles() * gasConstant * tempKelvin; // J
 	return energy / volume;
 }
@@ -369,6 +371,7 @@ void Atmosphere::empty()
 {
 	while (contents.size() > 0)
 		contents.pop_back();
+	add_heat(-heatEnergy);
 }
 Atmosphere Atmosphere::split(double splitVolume)
 {
