@@ -365,4 +365,22 @@ void Atmosphere::ignite(double dt)
 next:		continue;
 	}
 }
+void Atmosphere::empty()
+{
+	while (contents.size() > 0)
+		contents.pop_back();
+}
+Atmosphere Atmosphere::split(double splitVolume)
+{
+	Atmosphere other(splitVolume);
+	move_gas_volume(other, splitVolume);
+	add_volume(-splitVolume);
+	return other;
+}
+void Atmosphere::merge(Atmosphere other)
+{
+	for (auto &entry : other.contents)
+		add_moles_temp(entry.chemicalId, entry.moles, other.tempKelvin);
+	other.empty();
+}
 }

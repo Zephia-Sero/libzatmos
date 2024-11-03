@@ -39,6 +39,13 @@ public:
 	virtual void remove_without_heat(std::string const &chemicalId, double moles);
 	virtual void remove_all(std::string const &chemicalId);
 
+	// remove all gas from this atmosphere
+	void empty();
+	// splitVolume is the amount of L that should be removed from this atmosphere, aka the size of the returned atmosphere
+	Atmosphere split(double splitVolume);
+	// 'other' should probably be deleted by caller after this
+	void merge(Atmosphere other);
+
 	void mix_with(Atmosphere &other, double dt, bool allowBackflow, bool temperatureMix = true);
 	void mix_temperatures(Atmosphere &other, double dt);
 	// conductivity is in J / (s · K)
