@@ -34,7 +34,7 @@ vgcore*
 *.exe
 *.out
 *.app
-zatmoslib-demo*
+libzatmos-demo*
 
 
 # CMake

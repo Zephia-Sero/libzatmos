@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+namespace ZAtmos {
 struct AtmosphericsQuantity {
 public:
 	std::string chemicalId;
@@ -14,6 +15,6 @@ public:
 };
 
 typedef std::vector<AtmosphericsQuantity> AtmosphericsMixture;
-
+}
 
 #endif

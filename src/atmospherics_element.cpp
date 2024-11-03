@@ -1,6 +1,7 @@
 #include "atmospherics_element.hpp"
 #include "registry.hpp"
 
+namespace ZAtmos {
 ImmutableRegistry<AtmosphericsElement> atmosphericsElements;
 
 void register_atmospherics_builtins()
@@ -42,4 +43,5 @@ AtmosphericsElement::AtmosphericsElement()
 	heatCapacity = 0;
 	molarMass = 0;
 	thermalConductivity = 0;
+}
 }

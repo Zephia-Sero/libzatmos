@@ -1,6 +1,7 @@
 #include "elastic_atmosphere.hpp"
 #include "atmosphere.hpp"
 
+namespace ZAtmos {
 ElasticAtmosphere::ElasticAtmosphere(double initialVolume)
 	: Atmosphere(initialVolume)
 {}
@@ -18,4 +19,5 @@ void ElasticAtmosphere::tick(double dt)
 	double Vt = get_moles() * gasConstant * get_temperature() / externalPressure;
 	double dV = Vt - volume;
 	add_volume(dV);
+}
 }

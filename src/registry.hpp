@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 
+namespace ZAtmos {
 template <typename T>
 struct ImmutableRegistry {
 private:
@@ -84,7 +85,7 @@ public:
 		return get(key);
 	}
 };
-
+}
 
 
 #endif

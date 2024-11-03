@@ -2,10 +2,9 @@
 #define ATMOSPHERE_HPP
 
 #include <string>
-#include <utility>
-#include <vector>
 #include "atmospherics_mixture.hpp"
 
+namespace ZAtmos {
 struct Atmosphere {
 private:
 	static int currentId;
@@ -77,5 +76,6 @@ public:
 	// W/K·m
 	double get_thermal_conductivity() const;
 };
+}
 
 #endif

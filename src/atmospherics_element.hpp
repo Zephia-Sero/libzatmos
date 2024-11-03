@@ -3,8 +3,8 @@
 
 #include "registry.hpp"
 #include <string>
-#include <vector>
 
+namespace ZAtmos {
 struct AtmosphericsElement {
 private:
 	std::string name;
@@ -31,7 +31,8 @@ public:
 };
 
 extern ImmutableRegistry<AtmosphericsElement> atmosphericsElements;
-
 void register_atmospherics_builtins();
+
+}
 
 #endif

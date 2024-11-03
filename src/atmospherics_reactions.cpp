@@ -1,7 +1,7 @@
 #include "atmospherics_reactions.hpp"
 #include "atmosphere.hpp"
 
-
+namespace ZAtmos {
 AtmosphericsReaction::AtmosphericsReaction(double autoignitionPoint, double energyReleased, bool ignitable)
 	: autoignitionPoint(autoignitionPoint), energyReleased(energyReleased), ignitable(ignitable)
 {}
@@ -34,3 +34,4 @@ void AtmosphericsReaction::do_once(Atmosphere &atmosphere, double dt) const
 	atmosphere.add_heat(energyReleased * speedScale * dt);
 }
 std::vector<AtmosphericsReaction> atmosphericsReactions;
+}

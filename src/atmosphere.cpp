@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+namespace ZAtmos {
 int Atmosphere::currentId = 0;
 
 Atmosphere::Atmosphere(double volume)
@@ -363,4 +364,5 @@ void Atmosphere::ignite(double dt)
 		reaction.do_once(*this, dt);
 next:		continue;
 	}
+}
 }

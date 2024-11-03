@@ -4,23 +4,8 @@
 #include <cstdio>
 #include <cstdlib>
 
-GenericDevice::GenericDevice() {}
-
-void GenericDevice::update(double dt)
-{
-	(void) dt;
-	fprintf(stderr, "Called update on abstract device!");
-	exit(1);
-}
-void GenericDevice::toggle() { active = !active; }
-void GenericDevice::set(bool active) { this->active = active; };
-bool GenericDevice::is_on() { return active; }
-bool GenericDevice::is_running() { return active; }
-
-namespace ZAtmos::AtmosphericsDevices {
-Device::Device() {}
-
-Sink::Sink(Atmosphere &source) : source(source) {}
+namespace ZAtmos {
+namespace AtmosphericsDevices {
 bool Sink::is_running()
 {
 	double temperature = source.get_temperature();
@@ -30,8 +15,6 @@ bool Sink::is_running()
 	    && (pressure >= minPressure && pressure <= maxPressure);
 }
 
-
-Source::Source(Atmosphere &destination) : destination(destination) {}
 bool Source::is_running() {
 	double temperature = destination.get_temperature();
 	double pressure = destination.get_pressure();
@@ -39,7 +22,6 @@ bool Source::is_running() {
 	    && (temperature >= minTemperature && temperature <= maxTemperature)
 	    && (pressure >= minPressure && pressure <= maxPressure);
 }
-
 
 bool BinaryDevice::is_running()
 {
@@ -53,7 +35,6 @@ bool BinaryDevice::is_running()
 	    && (temperatureDiff >= minTemperatureDifferential && temperatureDiff <= maxTemperatureDifferential)
 	    && (pressureDiff >= minPressureDifferential && pressureDiff <= maxPressureDifferential);
 }
-
 
 void Valve::update(double dt)
 {
@@ -210,5 +191,5 @@ bool VolumeMixer::is_running()
 	    && (temperatureDiffB >= minTemperatureDifferentialB && temperatureDiffB <= maxTemperatureDifferentialB)
 	    && (pressureDiffB >= minPressureDifferentialB && pressureDiffB <= maxPressureDifferentialB);
 }
-
+}
 }

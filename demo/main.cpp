@@ -9,6 +9,7 @@
 #include "atmospherics_element.hpp"
 #include "atmospherics_device.hpp"
 
+using namespace ZAtmos;
 
 void draw_atmosphere(Atmosphere const &atmosphere, int x, int y)
 {

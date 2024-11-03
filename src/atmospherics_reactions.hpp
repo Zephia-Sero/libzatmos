@@ -5,7 +5,7 @@
 #include <vector>
 #include "atmosphere.hpp"
 
-
+namespace ZAtmos {
 struct AtmosphericsReaction {
 	AtmosphericsMixture reactants;
 	AtmosphericsMixture products;
@@ -22,6 +22,6 @@ struct AtmosphericsReaction {
 	void do_once(Atmosphere &atmosphere, double dt) const;
 };
 extern std::vector<AtmosphericsReaction> atmosphericsReactions;
-
+}
 
 #endif

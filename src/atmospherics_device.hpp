@@ -2,7 +2,6 @@
 #define DEVICE_HPP
 
 #include "atmosphere.hpp"
-#include "atmospherics_element.hpp"
 #include "atmospherics_mixture.hpp"
 
 #include <cstdio>
@@ -10,19 +9,25 @@
 #include <string>
 #include <vector>
 
+namespace ZAtmos {
 struct GenericDevice {
 	bool active = false;
-	GenericDevice();
-	virtual void update(double dt);
-	virtual void toggle();
-	virtual void set(bool active);
-	virtual bool is_on();
-	virtual bool is_running();
+	inline GenericDevice() {};
+	inline virtual void update(double dt)
+	{
+		(void) dt;
+		fprintf(stderr, "Called update on abstract device!");
+		exit(1);
+	}
+	inline virtual void toggle() { active = !active; }
+	inline virtual void set(bool active) { this->active = active; }
+	inline virtual bool is_on() { return active; };
+	inline virtual bool is_running() { return active; };
 };
 
-namespace ZAtmos::AtmosphericsDevices {
+namespace AtmosphericsDevices {
 struct Device : public GenericDevice {
-	Device();
+	inline Device() : GenericDevice() {}
 	// Minimum pressure:(destination side) required for device to run.
 	double minPressure = 0.0;
 	// Maximum pressure (destination side) required for device to run.
@@ -35,13 +40,13 @@ struct Device : public GenericDevice {
 
 struct Sink : public Device {
 	Atmosphere &source;
-	Sink(Atmosphere &source);
+	inline Sink(Atmosphere &source) : source(source) {}
 	virtual bool is_running() override;
 };
 
 struct Source : public Device {
 	Atmosphere &destination;
-	Source(Atmosphere &destination);
+	inline Source(Atmosphere &destination) : destination(destination) {}
 	virtual bool is_running() override;
 };
 
@@ -242,7 +247,7 @@ struct MolarMixer : Device {
 	virtual void update(double dt) override;
 	virtual bool is_running() override;
 };
-
+}
 }
 
 #endif
